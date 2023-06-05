@@ -6,6 +6,7 @@ import { ResgisterDto } from "./dtos/register";
 import * as CryptoJS from "crypto-js"
 import path from "path";
 import { use } from "passport";
+import { UpadateUserDto } from "./dtos/upadateuser.sto";
 
 @Injectable()
 export class UserService {
@@ -44,5 +45,9 @@ export class UserService {
 
     async getUserById(id:string){
         return await this.userModel.findById(id)
+    }
+
+    async updateUser (id: string, dto: UpadateUserDto){
+        return await this.userModel.findByIdAndUpdate(id, dto);
     }
 }
