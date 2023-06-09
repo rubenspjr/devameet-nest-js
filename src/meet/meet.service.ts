@@ -5,7 +5,7 @@ import { Meet, MeetDocument } from './schemas/meet.schema';
 import { UserService } from 'src/user/user.service';
 import { CreateMeetDto } from './dtos/createmeet.dto';
 import { generateLink } from './helpers/linkgenerator.helper';
-import { MettObject, MettObjectDocument } from './schemas/meetobject.schemas';
+import { MeetObject, MettObjectDocument } from './schemas/meetobject.schemas';
 import { UpdateMeetDto } from './dtos/updatemeet.dto';
 import { MeetMessagesHelper } from './helpers/meet.messageshelper';
 
@@ -15,7 +15,7 @@ export class MeetService {
 
     constructor(
         @InjectModel(Meet.name) private readonly model : Model<MeetDocument>,
-        @InjectModel(MettObject.name) private readonly objectModel : Model<MettObjectDocument>,
+        @InjectModel(MeetObject.name) private readonly objectModel : Model<MettObjectDocument>,
         private readonly userService:UserService
     ){}
 

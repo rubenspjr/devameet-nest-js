@@ -2,10 +2,10 @@ import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { Meet } from "./meet.schema";
 import mongoose, {HydratedDocument} from "mongoose"
 
-export type MettObjectDocument = HydratedDocument<MettObject>;
+export type MettObjectDocument = HydratedDocument<MeetObject>;
 
 @Schema()
-export class MettObject{
+export class MeetObject{
 
     @Prop({type: mongoose.Schema.Types.ObjectId, ref: Meet.name})
     meet: Meet;
@@ -26,4 +26,4 @@ export class MettObject{
     orientation: string;
 }
 
-export const MeetObjectSchema = SchemaFactory.createForClass(MettObject)
+export const MeetObjectSchema = SchemaFactory.createForClass(MeetObject)
