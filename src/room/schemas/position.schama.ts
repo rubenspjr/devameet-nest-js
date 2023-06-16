@@ -27,13 +27,16 @@ export class Position{
     orientation: string;
 
     @Prop({required:true})
-    x: number;
+    x:number;
 
     @Prop({required:true})
-    y: number;
+    y:number;
 
     @Prop({default:false})
     muted: boolean;
+
+    @Prop({default: false})
+    inRoom:boolean;
 }
 
 export const PositionSchema = SchemaFactory.createForClass(Position);

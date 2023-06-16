@@ -7,7 +7,7 @@ import { Position, PositionDocument } from './schemas/position.schama';
 import { UserService } from 'src/user/user.service';
 import { RoomMessagesHelper } from './helpers/room.messages.helper';
 import { UpdateUserPositionDto } from './dtos/updadeposition.dto';
-import { ToglMuteDto } from './dtos/toglMute.sto';
+import { toglMuteDto } from './dtos/toglMute.dto';
 
 @Injectable()
 export class RoomService {
@@ -47,7 +47,7 @@ export class RoomService {
         return await this.positionModel.deleteMany({clientId})
     }
 
-    async updateUserPosition(clienId: string, dto: UpdateUserPositionDto){
+    async updateUserPosition(clientId: string, dto: UpdateUserPositionDto){
         this.logger.debug(`updateUserPosition - ${dto.link}`);
 
         const meet = await this._getMeet(dto.link);
@@ -59,7 +59,7 @@ export class RoomService {
 
         const position = {
             ...dto,
-            clienId,
+            clientId,
             meet,
             user,
             name: user.name,
@@ -71,7 +71,7 @@ export class RoomService {
         
 
         const loogedUserInRoom = usersInRoom.find(u =>
-            u.user.toString() ==user._id.toString() || u.clientId === clienId);
+            u.user.toString() ==user._id.toString() || u.clientId === clientId);
 
         if(loogedUserInRoom){
             await this.positionModel.findByIdAndUpdate({_id: loogedUserInRoom._id},position)
@@ -84,12 +84,12 @@ export class RoomService {
         }
     }
 
-    async updateUserMute(dto:ToglMuteDto){
+    async updateUserMute(dto:toglMuteDto){
         this.logger.debug(`updateUserMute - ${dto.link} - ${dto.userId}`);
 
         const meet = await this._getMeet(dto.link);
         const user = await this.userService.getUserById(dto.userId);
-        await this.positionModel.updateMany({user, meet}, {meted: dto.muted})
+        await this.positionModel.updateMany({user, meet}, {muted: dto.muted})
     }
        
     

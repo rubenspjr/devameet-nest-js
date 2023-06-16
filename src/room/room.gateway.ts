@@ -4,7 +4,8 @@ import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { JoinRoomDto } from './dtos/joinroom.dto';
 import { UpdateUserPositionDto } from './dtos/updadeposition.dto';
-import { ToglMuteDto } from './dtos/toglMute.sto';
+import { toglMuteDto } from './dtos/toglMute.dto';
+
 
 type ActiveSocketType = {
   room:string;
@@ -23,7 +24,19 @@ export class RoomGateway implements OnGatewayInit, OnGatewayDisconnect {
   private activeSockets:ActiveSocketType[] = [];
 
   
-  handleDisconnect(client: any) {
+  async handleDisconnect(client: any) {
+    const existingOnSoket = this.activeSockets.find(
+      socket => socket.id === client.id
+    );
+    if(!existingOnSoket) return;
+
+     this.activeSockets.filter(
+      socket => socket.id !== client.id
+     );
+
+     await this.service.deleteUserPosition(client.id);
+     client.broadcast.emit(`${existingOnSoket.room}-remove-user`,{socketId: client.id})
+
     this .logger.debug(`Client: ${client.id} disconnected`);
     
     
@@ -35,10 +48,10 @@ export class RoomGateway implements OnGatewayInit, OnGatewayDisconnect {
   @SubscribeMessage('join')
   async handleJoin (client: Socket, payload:JoinRoomDto){
     const {link, userId} = payload;
-    const existingONsoket = this.activeSockets.find(
+    const existingOnSoket = this.activeSockets.find(
       socket => socket.room === link && socket.id === client.id);
 
-      if(!existingONsoket){
+      if(!existingOnSoket){
         this.activeSockets.push({room:link, id: client.id,userId});
 
         const dto = {
@@ -78,14 +91,14 @@ export class RoomGateway implements OnGatewayInit, OnGatewayDisconnect {
 
   }
 
-  @SubscribeMessage('togl-mute-user')
-  async handleToglMute (_: Socket, payload: ToglMuteDto){
+  @SubscribeMessage('toggl-mute-user')
+  async handleToglMute (_: Socket, payload: toglMuteDto){
     const {link} = payload;
 
       await this.service.updateUserMute(payload);
       const users = await this.service.listUserPositionByLink(link);
-        this.wss.emit(`${link}-update-user-list`,{users});
-
-  }
+      this.wss.emit(`${link}-update-user-list`, {users});
+        
+      }
   
 }
