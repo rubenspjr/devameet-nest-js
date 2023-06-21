@@ -1,4 +1,4 @@
-import { IsNumber, IsString, Max, Min } from "class-validator";
+import { IsNumber, IsString, Max, Min, IsBoolean } from "class-validator";
 import { JoinRoomDto } from "./joinroom.dto";
 import { MeetMessagesHelper } from "src/meet/helpers/meet.messageshelper";
 
@@ -17,5 +17,8 @@ export class UpdateUserPositionDto extends JoinRoomDto{
 
     @IsString({message: MeetMessagesHelper.UPDATE_ORIENTATION_NOT_VALID})
     orientation: string;
+
+    @IsBoolean()
+    inRoom: boolean;
 
 }

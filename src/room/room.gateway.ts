@@ -5,6 +5,8 @@ import { Server, Socket } from 'socket.io';
 import { JoinRoomDto } from './dtos/joinroom.dto';
 import { UpdateUserPositionDto } from './dtos/updadeposition.dto';
 import { toglMuteDto } from './dtos/toglMute.dto';
+import { inRoom } from './dtos/in.Room';
+import { Position } from './schemas/position.schama';
 
 
 type ActiveSocketType = {
@@ -25,17 +27,22 @@ export class RoomGateway implements OnGatewayInit, OnGatewayDisconnect {
 
   
   async handleDisconnect(client: any) {
-    const existingOnSoket = this.activeSockets.find(
-      socket => socket.id === client.id
+    const existingOnSocket = this.activeSockets.find(
+      (socket) => socket.id === client.id
     );
-    if(!existingOnSoket) return;
+    if(!existingOnSocket) return;
 
      this.activeSockets.filter(
-      socket => socket.id !== client.id
+      (socket) => socket.id !== client.id
      );
 
-     await this.service.deleteUserPosition(client.id);
-     client.broadcast.emit(`${existingOnSoket.room}-remove-user`,{socketId: client.id})
+     const dto = {
+      link: existingOnSocket.room,
+      userId: existingOnSocket.userId,
+      inRoom: false
+    } as inRoom;
+    await this.service.deleteUserPosition(client.id, dto);
+     client.broadcast.emit(`${existingOnSocket.room}-remove-user`,{socketId: client.id})
 
     this .logger.debug(`Client: ${client.id} disconnected`);
     
@@ -46,24 +53,42 @@ export class RoomGateway implements OnGatewayInit, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('join')
-  async handleJoin (client: Socket, payload:JoinRoomDto){
-    const {link, userId} = payload;
-    const existingOnSoket = this.activeSockets.find(
-      socket => socket.room === link && socket.id === client.id);
+  async handleJoin (client: Socket, payload: JoinRoomDto){
+    const { link, userId } = payload;
+    const existingOnSocket = this.activeSockets.find(
+      (socket) => socket.room === link && socket.id === client.id);
 
-      if(!existingOnSoket){
+      if(!existingOnSocket){
         this.activeSockets.push({room:link, id: client.id,userId});
+      // Código adicionado para obter a posição anterior do usuário
+      const previousPosition = await this.service.findPreviousUserPosition(link, userId);
+      const usersInRoom = await this.service.listUserPositionsByLink(link);
+
+      let x = 2;
+      let y = 2;
+      if(previousPosition.length > 0){
+        x = previousPosition[0].x;
+        y = previousPosition[0].y;
+      }
 
         const dto = {
           link,
           userId,
-          x: 2,
-          y: 2,
+          x: x,
+          y: y,
           orientation : "down"
         } as UpdateUserPositionDto
+        // Código adicionado para garantir que a posição inicial de cada cliente seja diferente dos outros
+        usersInRoom.map((user) => {
+          if (user.x === dto.x && user.y === dto.y) {
+            dto.x = Math.floor(Math.random() * 8) + 1;  
+            dto.y = Math.floor(Math.random() * 8) + 1;
+          }
+        });
 
         await this.service.updateUserPosition(client.id, dto);
-        const users = await this.service.listUserPositionByLink(link);
+
+        const users = await this.service.listUserPositionsByLink(link);
 
         this.wss.emit(`${link}-update-user-list`,{users});
 
@@ -86,7 +111,7 @@ export class RoomGateway implements OnGatewayInit, OnGatewayDisconnect {
       } as UpdateUserPositionDto
 
       await this.service.updateUserPosition(client.id, dto);
-      const users = await this.service.listUserPositionByLink(link);
+      const users = await this.service.listUserPositionsByLink(link);
         this.wss.emit(`${link}-update-user-list`,{users});
 
   }
@@ -96,7 +121,7 @@ export class RoomGateway implements OnGatewayInit, OnGatewayDisconnect {
     const {link} = payload;
 
       await this.service.updateUserMute(payload);
-      const users = await this.service.listUserPositionByLink(link);
+      const users = await this.service.listUserPositionsByLink(link);
       this.wss.emit(`${link}-update-user-list`, {users});
         
       }
